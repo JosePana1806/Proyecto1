@@ -3,7 +3,7 @@ function parseCSVLine (line,sep)
 	local pos = 1
 	sep = sep or ','
 	while true do 
-		local c = string.sub(line,pos,pos)
+		local c = string.sub(line,pos,pos)		
 		if (c == "") then break end
 		if (c == '"') then
 			-- quoted value (ignore separator within)
@@ -12,7 +12,7 @@ function parseCSVLine (line,sep)
 				local startp,endp = string.find(line,'^%b""',pos)
 				txt = txt..string.sub(line,startp+1,endp-1)
 				pos = endp + 1
-				c = string.sub(line,pos,pos) 
+				c = string.sub(line,pos,pos) 				
 				if (c == '"') then txt = txt..'"' end 
 				-- check first char AFTER quoted string, if it is another
 				-- quoted string without separator, then append it
@@ -39,9 +39,8 @@ function parseCSVLine (line,sep)
 end
 
 function readCSV(filename,header,sep) 
-
 	local fp = assert(io.open (filename))
-	local line=fp:read()
+	local line=fp:read()	
 	local columns = {}
 	local headers=parseCSVLine(line,sep)
 	for i,v in ipairs(headers) do

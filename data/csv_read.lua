@@ -1,20 +1,20 @@
-require "csv"
-require "dbg/DklBaseGraphics"
+require "data/csv"
+require "data/dbg/DklBaseGraphics"
 
 local bg
 local data
 
 function setup()
 	size(500,350)
-	local f = loadFont("data/Karla.ttf",18)
+	local f = loadFont("data/Vera.ttf",18)
 	textFont(f)
 	bg = DklBaseGraphics:new(width(),height())
-	data = readCSV("pana.csv",true,',')
+	data = readCSV("data/data.csv",true,',')	
 end
 
 function draw()
 	background(255)
-	bg:plot(data['temperature'],data['pressure'],{main="Pressure (mm Hg)",xlab="temperature",ylab="pressure"})
+	bg:plot(data['date'],data['value'],{main="Pressure (mm Hg)",xlab="temperature",ylab="pressure"})
 end
 
 function windowResized(w,h)
