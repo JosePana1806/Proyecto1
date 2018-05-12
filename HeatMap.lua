@@ -1,224 +1,143 @@
-require "data/csv"
+local daysMonths = {}
+local daysYear = {}
+local firstDay = 0
+local year = 2015
+local render = true
+local squareSize = 0
+local dayColors = {}
+local data = {}
 
-local title="Migrant deaths in the Mediterranean";
-local units=" dead or missing";
-local breaks={10,25,50,100};
-local colours={"#ffffd4","#fed98e","#fe9929","#d95f0e","#993404"};
+HeatMapCalendar = HeatMapCalendar or {}
 
---general layout information
-local cellSize = 17;
-local xOffset=20;
-local yOffset=60;
-local calY=50;--offset of calendar in each group
-local calX=25;
-local width = 960;
-local height = 163;
-local parseDate = "%d/%m/%y";
-format = "%d-%m-%Y";
-toolDate = "%d/%b/%y";
+function HeatMapCalendar:new (x, y, sqrSz, yr, dt)
+    d = {}
+    setmetatable(d, self)
+    self.__index = self
+    squareSize = sqrSz or 17
+    year = yr or 2015    
+    daysMonths = get_days_in_months(year)
+    firstDay = get_day_of_week(01, 01, year)[1]
+    daysYear = get_days_of_year(year)       
+    
+    data = dt or {}
+    dayColors = convertDataToDayColors(data, daysYear)
+    return d
+end
 
-data = readCSV("data/data.csv",true,',')	
-dates = data['date']
-values = data['value']
+function HeatMapCalendar:plot ()
+    if (render) then
+        background(255)
+        fill(255)
+        stroke(0.5)
+        drawCalendar(x, y, squareSize)
+        render = false
+    end 
+end
 
-d3.csv("data.csv", function(error, data) {
-    
-    --set up an array of all the dates in the data which we need to work out the range of the data
-    var dates = new Array();
-    var values = new Array();
-    
-    //parse the data
-    data.forEach(function(d)    {
-            dates.push(parseDate(d.date));
-            values.push(d.value);
-            d.date=parseDate(d.date);
-            d.value=d.value;
-            d.year=d.date.getFullYear();//extract the year from the data
-    });
-    
-    var yearlyData = d3.nest()
-        .key(function(d){return d.year;})
-        .entries(data);
-    
-    var svg = d3.select("body").append("svg")
-        .attr("width","90%")
-        .attr("viewBox","0 0 "+(xOffset+width)+" 540")
-        
-    //title
-    svg.append("text")
-    .attr("x",xOffset)
-    .attr("y",20)
-    .text(title);
-    
-    //create an SVG group for each year
-    var cals = svg.selectAll("g")
-        .data(yearlyData)
-        .enter()
-        .append("g")
-        .attr("id",function(d){
-            return d.key;
-        })
-        .attr("transform",function(d,i){
-            return "translate(0,"+(yOffset+(i*(height+calY)))+")";  
-        })
-    
-    var labels = cals.append("text")
-        .attr("class","yearLabel")
-        .attr("x",xOffset)
-        .attr("y",15)
-        .text(function(d){return d.key});
-    
-    //create a daily rectangle for each year
-    var rects = cals.append("g")
-        .attr("id","alldays")
-        .selectAll(".day")
-        .data(function(d) { return d3.time.days(new Date(parseInt(d.key), 0, 1), new Date(parseInt(d.key) + 1, 0, 1)); })
-        .enter().append("rect")
-        .attr("id",function(d) {
-            return "_"+format(d);
-            //return toolDate(d.date)+":\n"+d.value+" dead or missing";
-        })
-        .attr("class", "day")
-        .attr("width", cellSize)
-        .attr("height", cellSize)
-        .attr("x", function(d) {
-            return xOffset+calX+(d3.time.weekOfYear(d) * cellSize);
-        })
-        .attr("y", function(d) { return calY+(d.getDay() * cellSize); })
-        .datum(format);
-    
-    //create day labels
-    var days = ['Su','Mo','Tu','We','Th','Fr','Sa'];
-    var dayLabels=cals.append("g").attr("id","dayLabels")
-    days.forEach(function(d,i)    {
-        dayLabels.append("text")
-        .attr("class","dayLabel")
-        .attr("x",xOffset)
-        .attr("y",function(d) { return calY+(i * cellSize); })
-        .attr("dy","0.9em")
-        .text(d);
-    })
-    
-    //let's draw the data on
-    var dataRects = cals.append("g")
-        .attr("id","dataDays")
-        .selectAll(".dataday")
-        .data(function(d){
-            return d.values;   
-        })
-        .enter()
-        .append("rect")
-        .attr("id",function(d) {
-            return format(d.date)+":"+d.value;
-        })
-        .attr("stroke","#ccc")
-        .attr("width",cellSize)
-        .attr("height",cellSize)
-        .attr("x", function(d){return xOffset+calX+(d3.time.weekOfYear(d.date) * cellSize);})
-        .attr("y", function(d) { return calY+(d.date.getDay() * cellSize); })
-        .attr("fill", function(d) {
-            if (d.value<breaks[0]) {
-                return colours[0];
-            }
-            for (i=0;i<breaks.length+1;i++){
-                if (d.value>=breaks[i]&&d.value<breaks[i+1]){
-                    return colours[i];
-                }
-            }
-            if (d.value>breaks.length-1){
-                return colours[breaks.length]   
-            }
-        })
-    
-    //append a title element to give basic mouseover info
-    dataRects.append("title")
-        .text(function(d) { return toolDate(d.date)+":\n"+d.value+units; });
-    
-    //add montly outlines for calendar
-    cals.append("g")
-    .attr("id","monthOutlines")
-    .selectAll(".month")
-    .data(function(d) { 
-        return d3.time.months(new Date(parseInt(d.key), 0, 1),
-                                new Date(parseInt(d.key) + 1, 0, 1)); 
-    })
-    .enter().append("path")
-    .attr("class", "month")
-    .attr("transform","translate("+(xOffset+calX)+","+calY+")")
-    .attr("d", monthPath);
-    
-    //retreive the bounding boxes of the outlines
-    var BB = new Array();
-    var mp = document.getElementById("monthOutlines").childNodes;
-    for (var i=0;i<mp.length;i++){
-        BB.push(mp[i].getBBox());
-    }
-    
-    var monthX = new Array();
-    BB.forEach(function(d,i){
-        boxCentre = d.width/2;
-        monthX.push(xOffset+calX+d.x+boxCentre);
-    })
+function get_days_in_months(yr)    
+    months_days = {}    
+    for mnth=1, 13 do
+        months_days[mnth] = os.date('*t',os.time{year=yr,month=mnth+1,day=0})['day']
+    end
+    return months_days
+end
 
-    //create centred month labels around the bounding box of each month path
-    //create day labels
-    var months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-    var monthLabels=cals.append("g").attr("id","monthLabels")
-    months.forEach(function(d,i)    {
-        monthLabels.append("text")
-        .attr("class","monthLabel")
-        .attr("x",monthX[i])
-        .attr("y",calY/1.2)
-        .text(d);
-    })
-    
-        //create key
-    var key = svg.append("g")
-        .attr("id","key")
-        .attr("class","key")
-        .attr("transform",function(d){
-            return "translate("+xOffset+","+(yOffset-(cellSize*1.5))+")";
-        });
-    
-    key.selectAll("rect")
-        .data(colours)
-        .enter()
-        .append("rect")
-        .attr("width",cellSize)
-        .attr("height",cellSize)
-        .attr("x",function(d,i){
-            return i*130;
-        })
-        .attr("fill",function(d){
-            return d;
-        });
-    
-    key.selectAll("text")
-        .data(colours)
-        .enter()
-        .append("text")
-        .attr("x",function(d,i){
-            return cellSize+5+(i*130);
-        })
-        .attr("y","1em")
-        .text(function(d,i){
-            if (i<colours.length-1){
-                return "up to "+breaks[i];
-            }   else    {
-                return "over "+breaks[i-1];   
-            }
-        });
-    
-});//end data load
+function get_day_of_week(dd, mm, yy)
+    dw=os.date('*t',os.time{year=yy,month=mm,day=dd})['wday']
+    return {dw,({"Dom","Lun","Mar","Mier","Jue","Vie","Sab" })[dw]}
+end
 
-//pure Bostock - compute and return monthly path data for any year
-function monthPath(t0) {
-    var t1 = new Date(t0.getFullYear(), t0.getMonth() + 1, 0),
-        d0 = t0.getDay(), w0 = d3.time.weekOfYear(t0),
-        d1 = t1.getDay(), w1 = d3.time.weekOfYear(t1);
-    return "M" + (w0 + 1) * cellSize + "," + d0 * cellSize
-        + "H" + w0 * cellSize + "V" + 7 * cellSize
-        + "H" + w1 * cellSize + "V" + (d1 + 1) * cellSize
-        + "H" + (w1 + 1) * cellSize + "V" + 0
-        + "H" + (w0 + 1) * cellSize + "Z";
-}
+function get_days_of_year(yyyy)
+    days = 365
+    month = 1
+    day = 1
+    days_of_year = {}
+    if (daysMonths[2] == 29) then
+        days = 366
+    end    
+    for i=firstDay, days + firstDay - 1 do
+        if (day > daysMonths[month]) then
+            day = 1
+            month = month + 1        
+        end
+
+        days_of_year[i] = get_day_of_week(day, month, year)[1] 
+        day = day + 1        
+    end       
+    return days_of_year     
+end
+
+function drawCalendar(x, y, size) 
+    x = x or 5
+    y = y or 100
+    size = size or 17
+    day = 1
+    month = 1        
+    for i = firstDay, #daysYear do
+        strokeWeight(3)      
+        if (day > daysMonths[month]) then
+            --x = x + 1
+            day = 1
+            month = month + 1                       
+            line(x*size, y+(daysYear[i]*size), (x*size) + size, y+(daysYear[i]*size))
+            line(x*size, y+(daysYear[i]*size), (x*size), y+(daysYear[i]*size) + ((8-daysYear[i])*size))
+            line(x*size + size, y+(size), x*size + size, y+(daysYear[i]*size) + ((8-daysYear[i])*size))
+        end      
+        if (daysYear[i-1] == nil or daysYear[i-1] > daysYear[i]) then            
+            line(x*size, y+(daysYear[i]*size), (x*size) + size, y+(daysYear[i]*size))            
+            if (daysYear[i-1] == nil) then 
+                line(x*size, y+(daysYear[i]*size), (x*size), y+(daysYear[i]*size) + ((8-daysYear[i])*size))
+                line(x*size + size, y+(size), x*size + size, y+(daysYear[i]*size) + ((8-daysYear[i])*size))
+            end
+        elseif (daysYear[i+1] == nil or daysYear[i+1] < daysYear[i]) then            
+            strokeWeight(2)
+            line(x*size, (y+(daysYear[i]*size)+size), (x*size) + size, (y+(daysYear[i]*size)+size))  
+            if (daysYear[i+1] == nil) then                 
+                line(x*size, (y+(daysYear[i]*size)+size), (x*size), (y+(daysYear[i]*size)+size) + ((7-daysYear[i])*size))
+                line(x*size + size, y+(size), x*size + size, y+(daysYear[i]*size) + ((6-daysYear[i])*size))                
+            end          
+        end
+
+        if (dayColors[i]) then
+            if (dayColors[i] > 0 and dayColors[i] <= 10) then
+                fill("#FFFFB9")
+            elseif (dayColors[i] > 10 and dayColors[i] <= 25) then
+                fill("#FFC28E")
+            elseif (dayColors[i] > 25 and dayColors[i] <= 50) then
+                fill("#FF7C61")
+            elseif (dayColors[i] > 50 and dayColors[i] <= 100) then 
+                fill("#D35940")
+            elseif (dayColors[i] > 100) then 
+                fill("#88301E")
+            end
+        else
+            fill(255)
+        end
+        strokeWeight(0.3)
+        rect(x*size,y+(daysYear[i]*size), size,size)
+        if (daysYear[i] == 7) then            
+            x = x + 1            
+        end                    
+        day = day + 1                   
+    end
+end
+
+function day_of_year(date)
+    local i = 1    
+    dateArray = {}
+    for token in string.gmatch(date, "[^%/]+") do
+        dateArray[i] = token
+        i = i + 1
+    end    
+    dayColor = os.date("*t",os.time{year=dateArray[3], month=dateArray[2], day=dateArray[1]}).yday
+    dayColor = dayColor + (firstDay - 1)
+    return dayColor
+end
+
+function convertDataToDayColors(data, days)
+    colors = {}    
+    for i=1, #data[1] do
+        colors[day_of_year(data[1][i])] = tonumber(data[2][i])
+    end        
+    return colors
+end

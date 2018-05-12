@@ -2,14 +2,17 @@ function parseCSVLine (line,sep)
 	local res = {}
 	local pos = 1
 	sep = sep or ','
-	while true do 
+	while true do 		
 		local c = string.sub(line,pos,pos)		
-		if (c == "") then break end
-		if (c == '"') then
+		if (c == "") then 			
+			break
+		end
+		if (c == '"') then			
 			-- quoted value (ignore separator within)
 			local txt = ""
 			repeat
 				local startp,endp = string.find(line,'^%b""',pos)
+				print ("a: "..endp)
 				txt = txt..string.sub(line,startp+1,endp-1)
 				pos = endp + 1
 				c = string.sub(line,pos,pos) 				
@@ -22,19 +25,19 @@ function parseCSVLine (line,sep)
 			table.insert(res,txt)
 			assert(c == sep or c == "")
 			pos = pos + 1
-		else	
+		else				
 			-- no quotes used, just look for the first separator
-			local startp,endp = string.find(line,sep,pos)
-			if (startp) then 
+			local startp,endp = string.find(line,sep,pos)			
+			if (startp) then 				
 				table.insert(res,string.sub(line,pos,startp-1))
 				pos = endp + 1
 			else
-				-- no separator found -> use rest of string and terminate
+				-- no separator found -> use rest of string and terminate				
 				table.insert(res,string.sub(line,pos))
 				break
-			end 
+			end 			
 		end
-	end
+	end	
 	return res
 end
 
@@ -43,7 +46,7 @@ function readCSV(filename,header,sep)
 	local line=fp:read()	
 	local columns = {}
 	local headers=parseCSVLine(line,sep)
-	for i,v in ipairs(headers) do
+	for i,v in ipairs(headers) do		
 		columns[v]={}
 	end
 
@@ -52,11 +55,10 @@ function readCSV(filename,header,sep)
 		if (line==nil) then break end
 		local cols=parseCSVLine(line,sep)
 		local myfields={}
-		for i,v in ipairs(headers) do
-			table.insert(columns[v],tonumber(cols[i]))
+		for i,v in ipairs(headers) do							
+			table.insert(columns[v],cols[i])
 		end
-	end
-
+	end	
 	return columns
 end
 
