@@ -14,8 +14,9 @@ function setup ()
     local f = loadFont("data/Vera.ttf",18)
     textFont(f)
     data = readCSV("data/data.csv",true,',')
-    data = {data['date'], data['value']}    
-    hmc = HeatMapCalendar:new(x, y, squareSize, year, data)    
+    data = {data['date'], data['value']}   
+    tittle = "Migrant deaths in the Mediterranean" 
+    hmc = HeatMapCalendar:new(x, y, squareSize, year, data, tittle)    
 end
 
 function draw ()

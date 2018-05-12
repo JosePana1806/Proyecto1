@@ -6,15 +6,23 @@ local render = true
 local squareSize = 0
 local dayColors = {}
 local data = {}
+local tittle = ""
+local monthNames = {"JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"}
+local daysNames = {"Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"}
+local xPosition = 0
+local yPosition = 0
 
 HeatMapCalendar = HeatMapCalendar or {}
 
-function HeatMapCalendar:new (x, y, sqrSz, yr, dt)
+function HeatMapCalendar:new (x, y, sqrSz, yr, dt, pTittle)
     d = {}
     setmetatable(d, self)
     self.__index = self
     squareSize = sqrSz or 17
     year = yr or 2015    
+    tittle = pTittle or "Titulo"
+    xPosition = x or 0
+    yPosition = y or 0
     daysMonths = get_days_in_months(year)
     firstDay = get_day_of_week(01, 01, year)[1]
     daysYear = get_days_of_year(year)       
@@ -26,12 +34,13 @@ end
 
 function HeatMapCalendar:plot ()
     if (render) then
-        background(255)
+        background(255)        
+        header()
         fill(255)
         stroke(0.5)
         drawCalendar(x, y, squareSize)
         render = false
-    end 
+    end     
 end
 
 function get_days_in_months(yr)    
@@ -140,4 +149,35 @@ function convertDataToDayColors(data, days)
         colors[day_of_year(data[1][i])] = tonumber(data[2][i])
     end        
     return colors
+end
+
+function header()
+    local gap = 50
+    text(tittle, xPosition*squareSize, yPosition-4*squareSize)
+    local f = loadFont("data/Vera.ttf",14)
+    textFont(f)
+    fill("#FFFFB9")
+    rect(1*squareSize + gap + xPosition, (yPosition-2*squareSize)-squareSize, squareSize, squareSize)
+    fill("#FFC28E")
+    rect(8*squareSize + gap + xPosition, (yPosition-2*squareSize)-squareSize, squareSize, squareSize)
+    fill("#FF7C61")
+    rect(16*squareSize + gap + xPosition, (yPosition-2*squareSize)-squareSize, squareSize, squareSize)
+    fill("#D35940")            
+    rect(24*squareSize + gap + xPosition, (yPosition-2*squareSize)-squareSize, squareSize, squareSize)
+    fill("#88301E")
+    rect(32*squareSize + gap + xPosition, (yPosition-2*squareSize)-squareSize, squareSize, squareSize)
+    fill(0)
+    text("up to 10", 1*squareSize + gap + xPosition + squareSize, yPosition-2*squareSize)
+    text("up to 25", 8*squareSize + gap + xPosition + squareSize, yPosition-2*squareSize)
+    text("up to 50", 16*squareSize + gap + xPosition + squareSize, yPosition-2*squareSize)
+    text("up to 100",24*squareSize + gap + xPosition + squareSize, yPosition-2*squareSize)
+    text("over 100", 32*squareSize + gap + xPosition + squareSize, yPosition-2*squareSize)
+    fill(130)
+    text(year, xPosition*squareSize, yPosition-squareSize)
+    for i=1, #daysNames do
+        text(daysNames[i], xPosition+2*squareSize, (yPosition+squareSize)+(i*squareSize))
+    end
+    for i=1, #monthNames do
+        text(monthNames[i], ((1*squareSize + gap + 2*xPosition)*i) + squareSize, yPosition+(squareSize/2))
+    end
 end
