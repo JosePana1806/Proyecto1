@@ -11,6 +11,7 @@ local monthNames = {"JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP
 local daysNames = {"Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"}
 local xPosition = 0
 local yPosition = 0
+local calendarPosition = {}
 
 HeatMapCalendar = HeatMapCalendar or {}
 
@@ -27,6 +28,8 @@ function HeatMapCalendar:new (x, y, sqrSz, yr, dt, pTittle)
     firstDay = get_day_of_week(01, 01, year)[1]
     daysYear = get_days_of_year(year)       
     
+    calendarPosition = getCalendarPosition()
+
     data = dt or {}
     dayColors = convertDataToDayColors(data, daysYear)
     return d
@@ -61,6 +64,7 @@ function get_days_of_year(yyyy)
     month = 1
     day = 1
     days_of_year = {}
+    
     if (daysMonths[2] == 29) then
         days = 366
     end    
@@ -70,7 +74,7 @@ function get_days_of_year(yyyy)
             month = month + 1        
         end
 
-        days_of_year[i] = get_day_of_week(day, month, year)[1] 
+        days_of_year[i] = get_day_of_week(day, month, year)[1]
         day = day + 1        
     end       
     return days_of_year     
@@ -81,7 +85,7 @@ function drawCalendar(x, y, size)
     y = y or 100
     size = size or 17
     day = 1
-    month = 1        
+    month = 1            
     for i = firstDay, #daysYear do
         strokeWeight(3)      
         if (day > daysMonths[month]) then
@@ -180,4 +184,46 @@ function header()
     for i=1, #monthNames do
         text(monthNames[i], ((1*squareSize + gap + 2*xPosition)*i) + squareSize, yPosition+(squareSize/2))
     end
+end
+
+function mousePressed(x, y)     
+    calendar = getCalendarPosition()   
+    if (y>yPosition+squareSize and y<yPosition+squareSize*8 and x>(xPosition*squareSize) and x<(xPosition*(squareSize*12))) then
+        i = math.floor((y-yPosition)/(squareSize))
+        j = math.floor((x-(xPosition*squareSize))/squareSize)+1        
+        print (calendar[i][j][1].." "..calendar[i][j][2])       
+        --render = true             
+        drawCalendar(x,y,squareSize)   
+        fill(130,150,130)
+        rect(calendar[i][j][1]+(xPosition*squareSize)-squareSize, calendar[i][j][2]+yPosition, squareSize, squareSize) 
+        fill(0)
+    end
+end
+
+function getCalendarPosition() 
+    counter = firstDay
+    j = 1
+    k = 1
+
+    calendarPosition[1] = {}
+    calendarPosition[2] = {}
+    calendarPosition[3] = {}
+    calendarPosition[4] = {}
+    calendarPosition[5] = {}
+    calendarPosition[6] = {}
+    calendarPosition[7] = {}
+
+
+    for i=counter, #daysYear-counter do        
+        
+        for m = 1, 7 do
+            calendarPosition[j][k] = {k*squareSize,j*squareSize}            
+            j = j + 1
+            if (j==8) then j = 1 end
+            counter = counter + 1
+        end
+        if (k==53) then break end
+        k = k + 1        
+    end
+    return calendarPosition
 end
