@@ -28,7 +28,7 @@ En el código fuente especificamos cual archivo queremos leer para realizar la v
 luego simplemente ejecutamos la aplicación.
 
 
-![Imagen 1](/assets/Imagen2.1.png "ejecutar Diokol.exe")
+![Imagen 1](/assets/Imagen2.png "ejecutar Diokol.exe")
 
 y el resultado lucirá a algo similar a esto.
 
@@ -44,7 +44,7 @@ Observamos los patrones de las averías presentadas en el año 2018 (fecha prese
 
 Cabe recalcar que la visualización se comporta según los datos del archivo anteriormente citado. Para este caso en concreto se toma hasta la fecha actual (Mayo, 2018).
 
-![Imagen 1](/assets/imagen1.1.png "categorias")
+![Imagen 1](/assets/imagen1.png "categorias")
 
 Cada cuadro del Calendar representa un día del mes, y el color la cantidad de averías reportadas.
 
